@@ -4,7 +4,9 @@
 
 ## Placement
 
-The integrator is not its own crate. Per the Rustonomicon appendix's crate decision, it is the `solver` module of the unified `integrator` crate: `integrator/src/solver.rs`, exposed as `integrator::solver`.
+The integrator is not its own crate. Per the Rustonomicon appendix's crate
+decision, it is the `solver` module of the unified `integrator` crate:
+`integrator/src/solver.rs`, exposed as `integrator::solver`.
 
 ## Core Abstraction
 
@@ -30,7 +32,9 @@ slots are the input's "velocity" slots, and its "velocity" slots are
 accelerations computed from the system's physics. The system, not the solver,
 is responsible for that reduction.
 
-**No time parameter.** Nothing in this project's scope (RK4 for an autonomous cart-and-pole system) requires explicitly time-varying dynamics. If a future system needs it, add it then.
+**No time parameter.** Nothing in this project's scope (RK4 for an autonomous
+cart-and-pole system) requires explicitly time-varying dynamics. If a future
+system needs it, add it then.
 
 ## Step Function
 
@@ -45,16 +49,32 @@ call—no adaptive step-size control, per requirements.
 
 ## Numeric Type
 
-`f64` throughout: states, derivatives, and `dt`. No generic float parameter; this project does not need `f32`, and a generic parameter adds complexity requirements do not ask for.
+`f64` throughout: states, derivatives, and `dt`. No generic float parameter;
+this project does not need `f32`, and a generic parameter adds complexity
+requirements do not ask for.
 
 ## Test System (Decay)
 
-The `Decay` system used to verify solver accuracy is a simple autonomous exponential decay system: `dy/dt = -y` with scalar `f64` state. Its closed-form solution is `y(t) = y0 * e^(-t)`. The system lives in `solver.rs`'s `#[cfg(test)]` module (or the crate's `tests/` directory), not as part of the public API. Per requirements, concrete systems are out of scope for this component's shipped surface.
+The `Decay` system used to verify solver accuracy is a simple autonomous
+exponential decay system: `dy/dt = -y` with scalar `f64` state. Its closed-form
+solution is `y(t) = y0 * e^(-t)`. The system lives in `solver.rs`'s
+`#[cfg(test)]` module (or the crate's `tests/` directory), not as part of the
+public API. Per requirements, concrete systems are out of scope for this
+component's shipped surface.
 
 ## Accuracy Verification
 
-A unit test verifies RK4's 4th-order convergence by checking convergence order rather than exact-value comparison. The test integrates `Decay` from a known `y0` over a fixed total time interval at step size `h` and again at step size `h/2`. Each run's final result is compared to the closed-form value `y0 * e^(-t_total)` to compute an error at both step sizes. The test asserts that the `h/2` error is approximately `1/16` the `h` error (within a factor of 2 either side of 16×)—this directly demonstrates 4th-order global error (`O(h^4)`) and satisfies the "Solver Correctness" acceptance criterion.
+A unit test verifies RK4's 4th-order convergence by checking convergence order
+rather than exact-value comparison. The test integrates `Decay` from a known
+`y0` over a fixed total time interval at step size `h` and again at step size
+`h/2`. Each run's final result is compared to the closed-form value
+`y0 * e^(-t_total)` to compute an error at both step sizes. The test asserts
+that the `h/2` error is approximately `1/16` the `h` error (within a factor of
+2 either side of 16×)—this directly demonstrates 4th-order global error
+(`O(h^4)`) and satisfies the "Solver Correctness" acceptance criterion.
 
 ## Error Handling
 
-Both `step` and `derivative` are infallible, pure numeric functions. `dt > 0` is a caller invariant (the simulator's responsibility), not validated at runtime—there is no untrusted boundary here to guard.
+Both `step` and `derivative` are infallible, pure numeric functions. `dt > 0` is
+a caller invariant (the simulator's responsibility), not validated at
+runtime—there is no untrusted boundary here to guard.

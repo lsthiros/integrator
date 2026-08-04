@@ -5,3 +5,13 @@ edition = "2024"
 license = "CC0-1.0"
 
 [dependencies]
+yew = { version = "0.21", features = ["csr"], optional = true }
+gloo-timers = { version = "0.3", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", features = ["HtmlInputElement"], optional = true }
+
+[features]
+web = ["dep:yew", "dep:gloo-timers", "dep:wasm-bindgen", "dep:web-sys"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]

@@ -265,4 +265,6 @@ systems like a cart and pole.
 
 ## Appendix D: Agent Writing Style
 
-The agent is forbidden from writing sentences of the form "no X, no Y, no Z" (a bare list of negated nouns/phrases for rhetorical effect). State what's true or what was decided directly instead.
+The agent is forbidden from writing sentences of the form "no X, no Y, no
+Z" (a bare list of negated nouns/phrases for rhetorical effect). State
+what's true or what was decided directly instead.

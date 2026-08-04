@@ -2,3 +2,5 @@
 
 pub mod solver;
 pub mod simulator;
+#[cfg(feature = "web")]
+pub mod web;
