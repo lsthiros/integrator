@@ -166,6 +166,23 @@ The `controls` column holds, per requirements.md's acceptance criteria:
   plain text beneath the Reset button — no `Msg` variant or
   interactivity needed, satisfying requirements.md's on-page
   attribution criterion.
+- Next to that line, a CC0 badge image (`<img>`), vendored locally as
+  `integrator/cc-zero.svg` (fetched once from the official Creative
+  Commons mirror at
+  `https://mirrors.creativecommons.org/presskit/buttons/80x15/svg/cc-zero.svg`,
+  not hotlinked at runtime) and copied into the Trunk build via
+  `<link data-trunk rel="copy-file" href="cc-zero.svg">` in
+  `index.html`. The `<img src="cc-zero.svg">` uses a plain relative
+  path (no leading slash), so the browser resolves it against the
+  page's own URL — this works unmodified whether the page is served
+  from `/` (local `trunk serve`) or a subpath like `/integrator/`
+  (GitHub Pages), with no `public-url`-specific logic needed anywhere
+  in the Rust code. The image is wrapped in an
+  `<a href="https://creativecommons.org/publicdomain/zero/1.0/">`
+  linking to the canonical CC0 1.0 Universal deed, opened in a new tab
+  (`target="_blank" rel="noopener noreferrer"`, standard practice for
+  outbound links so the simulation isn't navigated away from). Static
+  markup, no `Msg` variant.
 
 Each slider's `min`/`max` bounds the value to a physically sensible
 range, so the UI itself cannot construct an invalid parameter. Bounds

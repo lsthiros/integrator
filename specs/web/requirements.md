@@ -44,6 +44,8 @@ entire simulation-and-UI stack in Rust (see YEW.md for research notes).
 - Display of current parameter values
 - Smooth, continuous animation at the simulation's tick rate
 - A visible copyright/attribution notice
+- A CC0 public-domain-dedication badge, linked to the canonical license
+  deed
 
 **Component Boundaries (for reference):**
 - Consumes: State data from the simulator component (cart position, pole angle,
@@ -78,6 +80,9 @@ entire simulation-and-UI stack in Rust (see YEW.md for research notes).
   newest entry visible without additional scrolling.
 - A copyright notice is visible on the page itself (not only in source
   code) to anyone viewing the application in a browser.
+- A CC0 badge is displayed next to the copyright notice, linking to the
+  canonical CC0 1.0 Universal deed
+  (https://creativecommons.org/publicdomain/zero/1.0/).
 
 ## Out of Scope
 

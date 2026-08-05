@@ -157,6 +157,21 @@
 - [x] Add "Reset" button dispatching `Msg::Reset` on click
 - [x] Add static copyright/credit line "© 2026 Louie Thiros" beneath Reset
       button in `view_controls()` as plain text with no interactivity
+- [x] Add CC0 badge `<img>` element next to copyright line in
+      `view_controls()`, with `src` set to
+      `https://mirrors.creativecommons.org/presskit/buttons/80x15/svg/cc-zero.svg`
+- [x] Wrap CC0 badge in `<a>` with `href` to the CC0 deed, `target="_blank"`,
+      and `rel="noopener noreferrer"`:
+      `https://creativecommons.org/publicdomain/zero/1.0/`
+- [x] Fetch the CC0 badge SVG from
+      `https://mirrors.creativecommons.org/presskit/buttons/80x15/svg/cc-zero.svg`
+      and save it as `integrator/cc-zero.svg` (vendor locally, not hotlinked)
+- [x] Add `<link data-trunk rel="copy-file" href="cc-zero.svg">` to
+      `integrator/index.html` to copy the vendored SVG into the Trunk build
+      output
+- [x] Change the CC0 badge `<img>` element's `src` attribute from the
+      full mirror URL to the relative path `cc-zero.svg` (works whether
+      served from `/` or a GitHub-Pages subpath)
 
 ## Event Log
 

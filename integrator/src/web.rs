@@ -175,6 +175,15 @@ impl App {
                 </label>
                 <button onclick={reset}>{ "Reset" }</button>
                 <div class="copyright">{ "\u{a9} 2026 Louie Thiros" }</div>
+                <a
+                    href="https://creativecommons.org/publicdomain/zero/1.0/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <img
+                        src="cc-zero.svg"
+                    />
+                </a>
             </div>
         }
     }
@@ -197,7 +206,7 @@ impl App {
                         y1={ORIGIN_PX_Y.to_string()}
                         x2={VIEW_WIDTH.to_string()}
                         y2={ORIGIN_PX_Y.to_string()}
-                        stroke="#333"
+                        stroke="#888"
                         stroke-width="2"
                     />
                     <rect
