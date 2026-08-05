@@ -184,6 +184,7 @@ impl App {
                         src="cc-zero.svg"
                     />
                 </a>
+                <div class="disclaimer">{ "Disclaimer: created with AI for the purposes of process experimentation. Not indicative of my actual work." } </div>
             </div>
         }
     }
