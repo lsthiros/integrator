@@ -48,6 +48,11 @@ body {
   cursor: pointer;
 }
 
+.copyright {
+  font-size: 0.75rem;
+  color: #888;
+}
+
 .viewer {
   display: flex;
   align-items: center;

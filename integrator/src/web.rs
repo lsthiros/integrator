@@ -174,6 +174,7 @@ impl App {
                     />
                 </label>
                 <button onclick={reset}>{ "Reset" }</button>
+                <div class="copyright">{ "\u{a9} 2026 Louie Thiros" }</div>
             </div>
         }
     }

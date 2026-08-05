@@ -162,6 +162,10 @@ The `controls` column holds, per requirements.md's acceptance criteria:
   values" output. Each slider's `oninput` callback parses the new value
   as `f64` and dispatches the matching `Msg::SetX`.
 - A "Reset" button dispatching `Msg::Reset`.
+- A static copyright/credit line, "© 2026 Louie Thiros", rendered as
+  plain text beneath the Reset button — no `Msg` variant or
+  interactivity needed, satisfying requirements.md's on-page
+  attribution criterion.
 
 Each slider's `min`/`max` bounds the value to a physically sensible
 range, so the UI itself cannot construct an invalid parameter. Bounds

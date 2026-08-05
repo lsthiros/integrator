@@ -155,6 +155,8 @@
       `Msg::SetPivotDamping(val)` with numeric readout and label
       "N·m·s/rad"
 - [x] Add "Reset" button dispatching `Msg::Reset` on click
+- [x] Add static copyright/credit line "© 2026 Louie Thiros" beneath Reset
+      button in `view_controls()` as plain text with no interactivity
 
 ## Event Log
 

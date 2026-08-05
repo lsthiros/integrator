@@ -43,6 +43,7 @@ entire simulation-and-UI stack in Rust (see YEW.md for research notes).
   motion)
 - Display of current parameter values
 - Smooth, continuous animation at the simulation's tick rate
+- A visible copyright/attribution notice
 
 **Component Boundaries (for reference):**
 - Consumes: State data from the simulator component (cart position, pole angle,
@@ -75,6 +76,8 @@ entire simulation-and-UI stack in Rust (see YEW.md for research notes).
 - A log panel displays a scrolling, transient history of user-triggered
   events (impulses, parameter changes, resets) as they occur, with the
   newest entry visible without additional scrolling.
+- A copyright notice is visible on the page itself (not only in source
+  code) to anyone viewing the application in a browser.
 
 ## Out of Scope
 
