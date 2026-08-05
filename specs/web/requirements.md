@@ -66,6 +66,7 @@ entire simulation-and-UI stack in Rust (see YEW.md for research notes).
   - Cart mass
   - Pole mass
   - Pole length (or similar system parameter)
+  - Pivot (rotational) friction / damping coefficient
 - Parameter changes take effect on the next simulation update.
 - The application remains responsive to user input while the simulation is
   running.

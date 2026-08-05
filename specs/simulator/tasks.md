@@ -21,6 +21,11 @@
 - [x] Define `CoulombFriction` struct with `pub mu: f64` field
 - [x] Implement `RailFriction` for `CoulombFriction` using
       `smoothed_sign` to compute friction force
+- [x] Define `PivotFriction` trait with `torque(&self,
+      angular_velocity: f64) -> f64` method
+- [x] Define `ViscousFriction` struct with `pub damping: f64` field
+- [x] Implement `PivotFriction` for `ViscousFriction` using
+      `-self.damping * angular_velocity` formula
 
 ## Simulator
 
@@ -39,6 +44,17 @@
 - [x] In `derivative()`, compute normal force as `(self.cart_mass +
       self.pole_mass) * self.gravity` and obtain friction force via
       `self.friction.force()`
+- [x] Modify `Simulator<F>` struct to add second generic parameter
+      `P: PivotFriction` and new `pivot_friction: P` field
+- [x] Update `derivative()` method cart-acceleration formula to
+      include `−τ·cos(θ)/L` term in numerator, where
+      `τ = self.pivot_friction.torque(state.pole_angular_velocity)`
+- [x] Update `derivative()` method pole-angular-acceleration formula
+      to include `+ τ/(m·L²)` term, where
+      `τ = self.pivot_friction.torque(state.pole_angular_velocity)`
+- [x] Update existing test struct literals (`test_gravity_only_sanity_check`,
+      `test_friction_damping`) to include `pivot_friction` field
+      (plumbing for compilation, e.g. `ViscousFriction { damping: 0.0 }`)
 
 ## Verification
 
@@ -46,3 +62,9 @@
       impulse; assert pole swings and total energy stays roughly bounded
 - [x] Write unit test: friction damping check with nonzero `mu` and an
       initial impulse; assert cart velocity trends toward zero over time
+- [x] Write unit test: pivot damping check with pole displaced or
+      initial angular velocity, nonzero pivot damping, rail friction
+      disabled; assert pole angular velocity trends toward zero over time
+- [x] Update `App::create()` in `web.rs` to construct `Simulator`
+      with `ViscousFriction { damping: <default> }` as second generic
+      parameter (hard requirement for `--features web` compilation)

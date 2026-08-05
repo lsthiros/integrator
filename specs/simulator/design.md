@@ -45,19 +45,25 @@ satisfying `DynamicalSystem::State`'s trait bound from the solver module.
 ## Equations of Motion
 
 Derived via Lagrangian mechanics for a cart of mass `M`, a pendulum-pole of mass
-`m` and length `L` pivoting on the cart, under gravity `g` (acting in `-y`) and
-a friction force `f` acting on the cart along the rail:
+`m` and length `L` pivoting on the cart, under gravity `g` (acting in `-y`), a
+friction force `f` acting on the cart along the rail, and a friction torque `τ`
+acting at the pivot (opposing the pole's rotation):
 
 ```text
-ẍ = (f + m·L·θ̇²·sin(θ) − m·g·sin(θ)·cos(θ)) / (M + m·sin²(θ))
-θ̈ = (g·sin(θ) − ẍ·cos(θ)) / L
+ẍ = (f + m·L·θ̇²·sin(θ) − m·g·sin(θ)·cos(θ) − τ·cos(θ)/L) / (M + m·sin²(θ))
+θ̈ = (g·sin(θ) − ẍ·cos(θ)) / L + τ/(m·L²)
 ```
 
-`f` comes from the pluggable friction model below. There is no separate "applied
-force" term in these equations — the impulse is a discrete velocity change
-applied outside of them, per the Modeling Assumptions above.
+These reduce to the original (pre-pivot-friction) equations when `τ = 0`; `τ`
+was re-derived through the same Lagrangian procedure as the rest of this
+section, adding `τ` as a generalized non-conservative force on the `θ`
+coordinate, rather than bolted on separately.
 
-## Pluggable Friction
+`f` and `τ` come from the pluggable friction models below. There is no
+separate "applied force" term in these equations — the impulse is a discrete
+velocity change applied outside of them, per the Modeling Assumptions above.
+
+## Pluggable Rail Friction
 
 ```rust
 pub trait RailFriction {
@@ -92,18 +98,54 @@ at `v = 0` under RK4's fixed-step evaluation. This smoothing is
 `CoulombFriction`'s own responsibility, not the `RailFriction` trait's — a
 different implementation is free to handle the zero-velocity case differently.
 
+## Pluggable Pivot Friction
+
+A second, independent trait for friction at the pole's pivot:
+
+```rust
+pub trait PivotFriction {
+    /// Torque (N·m) opposing the pole's rotation, given its current
+    /// angular velocity.
+    fn torque(&self, angular_velocity: f64) -> f64;
+}
+```
+
+Unlike `RailFriction`, this trait takes no normal-force parameter: a hinge has
+no equivalent load-bearing quantity the way the rail has cart+pole weight, so
+there is nothing physically meaningful to scale a Coulomb-style term by here.
+`Simulator` is generic over a second parameter, `P: PivotFriction`, on the same
+static-dispatch basis as `RailFriction`.
+
+The required default (and, for now, only) implementation is viscous
+(damped-bearing) friction, chosen over Coulomb specifically because it needs
+no invented constant and introduces no `sign()` discontinuity at
+`angular_velocity = 0`, unlike a Coulomb pivot torque would:
+
+```rust
+pub struct ViscousFriction {
+    pub damping: f64,
+}
+
+impl PivotFriction for ViscousFriction {
+    fn torque(&self, angular_velocity: f64) -> f64 {
+        -self.damping * angular_velocity
+    }
+}
+```
+
 ## Simulator Struct and API
 
 ```rust
-pub struct Simulator<F: RailFriction> {
+pub struct Simulator<F: RailFriction, P: PivotFriction> {
     pub cart_mass: f64,
     pub pole_mass: f64,
     pub pole_length: f64,
     pub gravity: f64,
     pub friction: F,
+    pub pivot_friction: P,
 }
 
-impl<F: RailFriction> Simulator<F> {
+impl<F: RailFriction, P: PivotFriction> Simulator<F, P> {
     pub fn advance(&self, state: State, impulse: f64, dt: f64) -> State {
         let mut kicked = state;
         kicked.cart_velocity += impulse / self.cart_mass;
@@ -111,11 +153,12 @@ impl<F: RailFriction> Simulator<F> {
     }
 }
 
-impl<F: RailFriction> DynamicalSystem for Simulator<F> {
+impl<F: RailFriction, P: PivotFriction> DynamicalSystem for Simulator<F, P> {
     type State = State;
     fn derivative(&self, state: State) -> State {
         // Implements the equations of motion above, with
         // f = self.friction.force(state.cart_velocity, (self.cart_mass + self.pole_mass) * self.gravity)
+        // τ = self.pivot_friction.torque(state.pole_angular_velocity)
     }
 }
 ```
@@ -146,3 +189,9 @@ requirements.md's "reasonable energy behavior" criterion.
 **Friction damping check**: with an impulse applied and nonzero `mu`, cart
 velocity should trend toward zero over time rather than sustaining indefinitely,
 matching the "rail friction opposes cart motion" acceptance criterion.
+
+**Pivot damping check**: with the pole displaced from vertical (or given
+an initial angular velocity) and nonzero pivot `damping`, and rail
+friction disabled, pole angular velocity should trend toward zero over
+time, matching the "pivot friction opposes pole rotation" acceptance
+criterion.

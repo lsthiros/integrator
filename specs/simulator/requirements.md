@@ -33,9 +33,10 @@ As the **web UI**, I want to:
   the simulation, so I can render it.
 - **Reset the system** to an initial or canonical state, so I can restart the
   simulation without reloading the application.
-- **Tune system parameters** (e.g., pole length, masses, friction, gravity
-  magnitude) and have those changes take effect on the next tick, so I can
-  experiment with different physical configurations.
+- **Tune system parameters** (e.g., pole length, masses, rail friction,
+  pivot friction, gravity magnitude) and have those changes take effect
+  on the next tick, so I can experiment with different physical
+  configurations.
 
 ## Inputs and Outputs
 
@@ -50,6 +51,7 @@ As the **web UI**, I want to:
   - Pole mass (kg)
   - Pole length (m)
   - Rail sliding-friction coefficient (dimensionless)
+  - Pivot (rotational) friction coefficient
   - Gravity magnitude (m/s²)
 
 ### Outputs
@@ -84,6 +86,11 @@ As the **web UI**, I want to:
   along the rail (sliding/kinetic friction). Cart motion introduced by an
   impulse is damped over time by this friction, in addition to any energy
   exchanged with the pole.
+- **Pivot friction opposes pole rotation**: Friction at the pole's pivot
+  opposes its angular motion (rotational/viscous friction, proportional
+  to angular velocity). Pole rotation introduced by gravity or an
+  impulse is damped over time by this friction, independent of rail
+  friction.
 - **All quantities use SI units**: All configurable constants and reported
   outputs use SI units.
 

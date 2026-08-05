@@ -7,7 +7,7 @@
 The web UI is not its own crate. Per the Rustonomicon appendix, it is the
 `web` module of the unified `integrator` crate: `integrator/src/web.rs`,
 exposed conditionally as `integrator::web`. It depends on
-`integrator::simulator::{Simulator, State, CoulombFriction}`.
+`integrator::simulator::{Simulator, State, CoulombFriction, ViscousFriction}`.
 
 The `web` module and its dependencies (`yew`, `gloo-timers`) sit behind a
 new `web` Cargo feature, so a plain native `cargo build`/`cargo test` on
@@ -84,7 +84,7 @@ regions through plain helper methods (`view_controls`, `view_viewer`,
 
 ```rust
 pub struct App {
-    simulator: Simulator<CoulombFriction>,
+    simulator: Simulator<CoulombFriction, ViscousFriction>,
     state: State,
     log: VecDeque<String>,
     _ticker: gloo_timers::callback::Interval,
@@ -98,12 +98,13 @@ pub enum Msg {
     SetPoleMass(f64),
     SetPoleLength(f64),
     SetFriction(f64),
+    SetPivotDamping(f64),
     Reset,
 }
 ```
 
-`create()` builds a default `Simulator<CoulombFriction>`, sets
-`state = State::initial()`, and starts `_ticker` as a
+`create()` builds a default `Simulator<CoulombFriction, ViscousFriction>`,
+sets `state = State::initial()`, and starts `_ticker` as a
 `gloo_timers::callback::Interval` that fires every `TICK_MS`
 milliseconds, each tick sending `Msg::Tick` into the component:
 
@@ -127,7 +128,7 @@ for the next scheduled tick — so a push feels responsive rather than
 delayed by up to one tick interval. It also appends an entry to `log`.
 
 `Msg::SetX(value)` mutates the corresponding public field on
-`self.simulator` directly (all five fields are `pub`, per
+`self.simulator` directly (all six fields are `pub`, per
 `specs/simulator/design.md`) and appends a log entry; `Msg::Reset` resets
 `self.state` to `State::initial()` and logs the reset. Every arm returns
 `true` from `update()` to trigger a re-render.
@@ -154,11 +155,12 @@ The `controls` column holds, per requirements.md's acceptance criteria:
 
 - Two buttons, "Push Left" / "Push Right", dispatching
   `Msg::Push(-IMPULSE_MAGNITUDE)` / `Msg::Push(IMPULSE_MAGNITUDE)`.
-- Five labeled `<input type="range">` sliders — gravity, cart mass, pole
-  mass, pole length, friction coefficient — each paired with a numeric
-  readout of its current value, satisfying requirements.md's "display of
-  current parameter values" output. Each slider's `oninput` callback
-  parses the new value as `f64` and dispatches the matching `Msg::SetX`.
+- Six labeled `<input type="range">` sliders — gravity, cart mass, pole
+  mass, pole length, rail friction coefficient, pivot damping
+  coefficient — each paired with a numeric readout of its current
+  value, satisfying requirements.md's "display of current parameter
+  values" output. Each slider's `oninput` callback parses the new value
+  as `f64` and dispatches the matching `Msg::SetX`.
 - A "Reset" button dispatching `Msg::Reset`.
 
 Each slider's `min`/`max` bounds the value to a physically sensible
@@ -166,13 +168,14 @@ range, so the UI itself cannot construct an invalid parameter. Bounds
 (subject to adjustment during implementation if they feel wrong in
 practice):
 
-| Parameter    | Min  | Max |
-|--------------|------|-----|
-| Gravity      | 0    | 20  |
-| Cart mass    | 0.1  | 10  |
-| Pole mass    | 0.1  | 10  |
-| Pole length  | 0.1  | 5   |
-| Friction (μ) | 0    | 2   |
+| Parameter     | Min  | Max |
+|---------------|------|-----|
+| Gravity       | 0    | 20  |
+| Cart mass     | 0.1  | 10  |
+| Pole mass     | 0.1  | 10  |
+| Pole length   | 0.1  | 5   |
+| Friction (μ)  | 0    | 2   |
+| Pivot damping | 0    | 2   |
 
 ## Event Log
 

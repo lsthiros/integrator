@@ -7,7 +7,7 @@
 //! simulation parameters. See `specs/web/design.md` for the design this
 //! module implements.
 
-use crate::simulator::{CoulombFriction, Simulator, State};
+use crate::simulator::{CoulombFriction, Simulator, State, ViscousFriction};
 use gloo_timers::callback::Interval;
 use std::collections::VecDeque;
 use web_sys::HtmlInputElement;
@@ -54,13 +54,15 @@ pub enum Msg {
     SetPoleLength(f64),
     /// Set the simulator's coefficient of friction.
     SetFriction(f64),
+    /// Set the simulator's pivot (rotational) damping coefficient.
+    SetPivotDamping(f64),
     /// Reset the simulation state to its initial conditions.
     Reset,
 }
 
 /// The root Yew component for the cart-and-pole web UI.
 pub struct App {
-    simulator: Simulator<CoulombFriction>,
+    simulator: Simulator<CoulombFriction, ViscousFriction>,
     state: State,
     log: VecDeque<String>,
     _ticker: Interval,
@@ -97,6 +99,7 @@ impl App {
         let on_pole_mass = Self::parameter_input(link, Msg::SetPoleMass);
         let on_pole_length = Self::parameter_input(link, Msg::SetPoleLength);
         let on_friction = Self::parameter_input(link, Msg::SetFriction);
+        let on_pivot_damping = Self::parameter_input(link, Msg::SetPivotDamping);
 
         html! {
             <div class="controls">
@@ -157,6 +160,17 @@ impl App {
                         step="0.01"
                         value={self.simulator.friction.mu.to_string()}
                         oninput={on_friction}
+                    />
+                </label>
+                <label>
+                    { format!("Pivot damping: {:.2} N\u{b7}m\u{b7}s/rad", self.simulator.pivot_friction.damping) }
+                    <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.01"
+                        value={self.simulator.pivot_friction.damping.to_string()}
+                        oninput={on_pivot_damping}
                     />
                 </label>
                 <button onclick={reset}>{ "Reset" }</button>
@@ -225,6 +239,7 @@ impl Component for App {
             pole_length: 1.0,
             gravity: 9.81,
             friction: CoulombFriction { mu: 0.1 },
+            pivot_friction: ViscousFriction { damping: 0.05 },
         };
 
         let link = ctx.link().clone();
@@ -270,6 +285,10 @@ impl Component for App {
             Msg::SetFriction(value) => {
                 self.simulator.friction.mu = value;
                 self.push_log(format!("Friction coefficient set to {:.2}", value));
+            }
+            Msg::SetPivotDamping(value) => {
+                self.simulator.pivot_friction.damping = value;
+                self.push_log(format!("Pivot damping set to {:.2} N\u{b7}m\u{b7}s/rad", value));
             }
             Msg::Reset => {
                 self.state = State::initial();

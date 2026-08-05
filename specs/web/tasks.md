@@ -47,6 +47,7 @@
 - [x] Define `pub enum Msg` with variants: `Tick`, `Push(f64)`,
       `SetGravity(f64)`, `SetCartMass(f64)`, `SetPoleMass(f64)`,
       `SetPoleLength(f64)`, `SetFriction(f64)`, `Reset`
+- [x] Add `SetPivotDamping(f64)` variant to `Msg` enum
 - [x] Define `TICK_MS` constant for tick interval (e.g., 16 milliseconds)
 - [x] Define `DT` constant as `TICK_MS as f64 / 1000.0` for time step
 - [x] Define `IMPULSE_MAGNITUDE` constant for push button force
@@ -88,6 +89,8 @@
       `self.simulator.pole_length` and append log entry
 - [x] In `Msg::SetFriction(val)` arm, mutate
       `self.simulator.friction.mu` and append log entry
+- [x] In `Msg::SetPivotDamping(val)` arm, mutate
+      `self.simulator.pivot_friction.damping` and append log entry
 - [x] In `Msg::Reset` arm, reset `self.state = State::initial()` and
       append log entry
 - [x] Ensure all `update()` arms return `true` to trigger re-render
@@ -146,6 +149,11 @@
       `max="2"`, `value = simulator.friction.mu.to_string()`
 - [x] Add `oninput` handler to friction slider dispatching
       `Msg::SetFriction(val)` with numeric readout and label "μ"
+- [x] Create pivot damping range slider with `min="0"`, `max="2"`,
+      `value = simulator.pivot_friction.damping.to_string()`
+- [x] Add `oninput` handler to pivot damping slider dispatching
+      `Msg::SetPivotDamping(val)` with numeric readout and label
+      "N·m·s/rad"
 - [x] Add "Reset" button dispatching `Msg::Reset` on click
 
 ## Event Log
@@ -173,6 +181,8 @@
 - [ ] Adjust pole mass slider, observe dynamics respond appropriately
 - [ ] Adjust pole length slider, observe pole visual and dynamics change
 - [ ] Adjust friction slider, observe cart velocity damping changes
+- [ ] Adjust pivot damping slider, observe pole rotational damping
+      changes
 - [ ] Click "Reset" button, verify cart and pole return to initial state
 - [ ] Perform action (push or parameter change), verify log entry appears
 - [ ] Perform multiple actions, verify newest log entry appears at bottom

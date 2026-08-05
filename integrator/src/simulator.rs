@@ -94,12 +94,36 @@ impl RailFriction for CoulombFriction {
     }
 }
 
+/// A trait for friction models acting on the pole's pivot.
+///
+/// Implementors define how friction opposes the pole's angular velocity.
+pub trait PivotFriction {
+    /// Compute the friction torque (in Newton-meters) opposing the pole's
+    /// rotation, given its current angular velocity.
+    fn torque(&self, angular_velocity: f64) -> f64;
+}
+
+/// Viscous (damped-bearing) friction model for the pole's pivot.
+///
+/// Friction opposes rotation with a magnitude proportional to the angular
+/// velocity, parameterized by a damping coefficient.
+pub struct ViscousFriction {
+    /// Damping coefficient (N·m·s/rad).
+    pub damping: f64,
+}
+
+impl PivotFriction for ViscousFriction {
+    fn torque(&self, angular_velocity: f64) -> f64 {
+        -self.damping * angular_velocity
+    }
+}
+
 /// A simulator for a cart-and-pole system.
 ///
 /// The simulator couples the cart's translational motion along a rail with
 /// a pole's rotational motion about the cart. It uses the RK4 solver to
 /// advance the system state over time, applying gravity and friction.
-pub struct Simulator<F: RailFriction> {
+pub struct Simulator<F: RailFriction, P: PivotFriction> {
     /// Mass of the cart, in kilograms.
     pub cart_mass: f64,
     /// Mass of the pole (point mass at the end), in kilograms.
@@ -110,9 +134,11 @@ pub struct Simulator<F: RailFriction> {
     pub gravity: f64,
     /// The friction model for the cart on the rail.
     pub friction: F,
+    /// The friction model for the pole's pivot.
+    pub pivot_friction: P,
 }
 
-impl<F: RailFriction> Simulator<F> {
+impl<F: RailFriction, P: PivotFriction> Simulator<F, P> {
     /// Advance the system state by one time step, applying an impulse and then integrating.
     ///
     /// The impulse is applied as an instantaneous velocity change to the cart,
@@ -134,7 +160,7 @@ impl<F: RailFriction> Simulator<F> {
     }
 }
 
-impl<F: RailFriction> DynamicalSystem for Simulator<F> {
+impl<F: RailFriction, P: PivotFriction> DynamicalSystem for Simulator<F, P> {
     type State = State;
 
     fn derivative(&self, state: State) -> State {
@@ -148,17 +174,24 @@ impl<F: RailFriction> DynamicalSystem for Simulator<F> {
         // Compute friction force
         let friction_force = self.friction.force(state.cart_velocity, normal_force);
 
+        // Compute pivot friction torque
+        let pivot_torque = self.pivot_friction.torque(state.pole_angular_velocity);
+
         // Equations of motion (Lagrangian mechanics)
-        // ẍ = (f + m·L·θ̇²·sin(θ) − m·g·sin(θ)·cos(θ)) / (M + m·sin²(θ))
+        // ẍ = (f + m·L·θ̇²·sin(θ) − m·g·sin(θ)·cos(θ) − τ·cos(θ)/L)
+        //     / (M + m·sin²(θ))
         let numerator = friction_force
             + self.pole_mass * self.pole_length * theta_dot * theta_dot * sin_theta
-            - self.pole_mass * self.gravity * sin_theta * cos_theta;
+            - self.pole_mass * self.gravity * sin_theta * cos_theta
+            - pivot_torque * cos_theta / self.pole_length;
         let denominator = self.cart_mass + self.pole_mass * sin_theta * sin_theta;
         let cart_acceleration = numerator / denominator;
 
-        // θ̈ = (g·sin(θ) − ẍ·cos(θ)) / L
-        let pole_angular_acceleration =
-            (self.gravity * sin_theta - cart_acceleration * cos_theta) / self.pole_length;
+        // θ̈ = (g·sin(θ) − ẍ·cos(θ)) / L + τ/(m·L²)
+        let pole_angular_acceleration = (self.gravity * sin_theta
+            - cart_acceleration * cos_theta)
+            / self.pole_length
+            + pivot_torque / (self.pole_mass * self.pole_length * self.pole_length);
 
         // Derivative is velocity and acceleration
         State {
@@ -184,6 +217,7 @@ mod tests {
             pole_length: 1.0,
             gravity: 9.81,
             friction: CoulombFriction { mu: 0.0 },
+            pivot_friction: ViscousFriction { damping: 0.0 },
         };
 
         // Start with pole tilted slightly from vertical
@@ -256,6 +290,7 @@ mod tests {
             pole_length: 1.0,
             gravity: 9.81,
             friction: CoulombFriction { mu: 0.5 },
+            pivot_friction: ViscousFriction { damping: 0.0 },
         };
 
         // Start with the pole upright and give the cart an impulse
@@ -299,6 +334,66 @@ mod tests {
             decreasing_count as f64 / cart_velocities.len() as f64 > 0.6,
             "Cart velocity should trend toward zero; only {:.1}% of steps showed decrease",
             (decreasing_count as f64 / cart_velocities.len() as f64) * 100.0
+        );
+    }
+
+    /// Test that pivot friction damps pole angular velocity over time.
+    #[test]
+    fn test_pivot_friction_damping() {
+        // Rail friction disabled; pivot friction enabled.
+        let simulator = Simulator {
+            cart_mass: 1.0,
+            pole_mass: 0.1,
+            pole_length: 1.0,
+            gravity: 9.81,
+            friction: CoulombFriction { mu: 0.0 },
+            pivot_friction: ViscousFriction { damping: 0.5 },
+        };
+
+        // Start with the pole displaced from vertical and rotating.
+        let mut state = State {
+            cart_position: 0.0,
+            cart_velocity: 0.0,
+            pole_angle: 0.3,
+            pole_angular_velocity: 2.0,
+        };
+
+        const DT: f64 = 0.01;
+        const STEPS: usize = 500;
+
+        let mut angular_velocities = Vec::new();
+
+        for _ in 0..STEPS {
+            angular_velocities.push(state.pole_angular_velocity.abs());
+            state = simulator.advance(state, 0.0, DT);
+        }
+
+        // Check that angular velocity is decreasing on average
+        let initial_velocity = angular_velocities[0];
+        let final_velocity = angular_velocities[angular_velocities.len() - 1];
+
+        assert!(
+            final_velocity < initial_velocity,
+            "Pole angular velocity should decrease due to pivot friction: {} -> {}",
+            initial_velocity,
+            final_velocity
+        );
+
+        // Check that velocity trend is toward zero
+        // (allow some oscillation, but overall trend should be downward)
+        let mut decreasing_count = 0;
+        for i in 1..angular_velocities.len() {
+            if angular_velocities[i] < angular_velocities[i - 1] {
+                decreasing_count += 1;
+            }
+        }
+
+        // At least 60% of steps should show decreasing angular velocity
+        assert!(
+            decreasing_count as f64 / angular_velocities.len() as f64 > 0.6,
+            "Pole angular velocity should trend toward zero; only {:.1}% \
+             of steps showed decrease",
+            (decreasing_count as f64 / angular_velocities.len() as f64) * 100.0
         );
     }
 }
