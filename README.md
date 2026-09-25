@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC0-1.0 -->
 
-# AI Slop Integrator: A Viaticum for my art, and my career
+# AI Slop Integrator: A last rites for my dying art, and my wretched career
 
 This project presents a mindless foray into the world of AI code and Spec
 Driven Development. For too long have I wallowed in this miserable profession,
